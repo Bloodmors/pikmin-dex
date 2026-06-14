@@ -23,49 +23,64 @@ function isComplete(p: string) {
 
 function progressNumeric(p: string): number {
   if (p === "" || p === "-" || p === "#ERROR!") return 0;
-  if (p === "O") return -1; // sentinel for complete
+  if (p === "O") return -1;
   const n = Number(p);
   return Number.isFinite(n) ? n : 0;
 }
 
-function ProgressBadge({
+function VariantPanel({
   variant,
   label,
 }: {
-  variant: DecorVariant;
+  variant: DecorVariant | null;
   label: "一般" | "稀有";
 }) {
+  if (!variant) {
+    return (
+      <div className="flex h-full items-center text-xs text-zinc-400 dark:text-zinc-600">
+        <span className="mr-3 inline-block w-8 shrink-0 font-medium text-zinc-400 dark:text-zinc-500">
+          {label}
+        </span>
+        <span>—</span>
+      </div>
+    );
+  }
+
   const total = variant.colors.length;
   const complete = isComplete(variant.progress);
-  const num = progressNumeric(variant.progress);
-  const got = complete ? total : num;
+  const got = complete ? total : progressNumeric(variant.progress);
+  const pct = total > 0 ? (got / total) * 100 : 0;
 
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-      <span
-        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${
-          label === "稀有"
-            ? "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200"
-            : "bg-zinc-100 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-200"
-        }`}
-      >
-        {label}
-      </span>
-      <span
-        className={`text-sm font-semibold tabular-nums ${
-          complete
-            ? "text-emerald-600 dark:text-emerald-400"
-            : "text-zinc-900 dark:text-zinc-100"
-        }`}
-      >
-        {complete ? `✓ ${total} / ${total}` : `${got} / ${total}`}
-      </span>
-      <ul className="flex flex-wrap gap-1.5">
+    <div>
+      <div className="flex items-baseline gap-3">
+        <span className="w-8 shrink-0 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+          {label}
+        </span>
+        <span
+          className={`text-sm font-semibold tabular-nums ${
+            complete
+              ? "text-emerald-600 dark:text-emerald-400"
+              : "text-zinc-800 dark:text-zinc-100"
+          }`}
+        >
+          {got} / {total}
+        </span>
+        <div className="relative ml-1 h-1 flex-1 rounded-full bg-zinc-100 dark:bg-zinc-700/60 overflow-hidden">
+          <div
+            className={`absolute inset-y-0 left-0 rounded-full ${
+              complete ? "bg-emerald-500" : "bg-zinc-400 dark:bg-zinc-500"
+            }`}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      </div>
+      <ul className="mt-2 flex flex-wrap gap-1.5 pl-11">
         {variant.colors.map((c, i) => (
           <li
             key={i}
             title={c}
-            className="h-5 w-5 rounded-full ring-1 ring-black/10 dark:ring-white/20 shadow-sm"
+            className="h-4 w-4 rounded-full ring-1 ring-black/10 dark:ring-white/20"
             style={{ backgroundColor: COLOR_HEX[c] }}
           />
         ))}
@@ -78,42 +93,51 @@ export default function Home() {
   const completedCount = decor.filter((d) => isComplete(d.normal.progress)).length;
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-emerald-50 via-emerald-50 to-white dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-900">
-      <header className="sticky top-0 z-10 border-b border-emerald-100/80 dark:border-zinc-800 bg-emerald-50/85 dark:bg-zinc-950/85 backdrop-blur px-6 py-4">
-        <div className="mx-auto max-w-3xl flex flex-wrap items-baseline justify-between gap-y-2 gap-x-6">
+    <main className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
+      <header className="sticky top-0 z-10 border-b border-zinc-200 dark:border-zinc-800 bg-white/90 dark:bg-zinc-900/85 backdrop-blur">
+        <div className="mx-auto max-w-6xl px-6 py-4 flex flex-wrap items-baseline justify-between gap-y-2 gap-x-6">
           <h1 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
             皮克敏圖鑑
             <span className="ml-2 text-xs font-normal text-zinc-500 dark:text-zinc-400">
               Pikmin Bloom 裝飾品
             </span>
           </h1>
-          <div className="flex items-center gap-4 text-xs tabular-nums text-zinc-700 dark:text-zinc-300">
+          <div className="flex items-center gap-4 text-xs tabular-nums text-zinc-600 dark:text-zinc-400">
             <span>
-              一般 <strong className="font-semibold">{overallNormal.replace("一般", "").trim()}</strong>
+              一般{" "}
+              <strong className="font-semibold text-zinc-900 dark:text-zinc-100">
+                {overallNormal.replace("一般", "").trim()}
+              </strong>
             </span>
-            <span className="text-amber-700 dark:text-amber-300">
-              稀有 <strong className="font-semibold">{overallRare.replace("稀有", "").trim()}</strong>
+            <span>
+              稀有{" "}
+              <strong className="font-semibold text-zinc-900 dark:text-zinc-100">
+                {overallRare.replace("稀有", "").trim()}
+              </strong>
             </span>
-            <span className="text-emerald-700 dark:text-emerald-400">
-              場景 ✓ <strong className="font-semibold">{completedCount} / {decor.length}</strong>
+            <span>
+              場景 ✓{" "}
+              <strong className="font-semibold text-emerald-600 dark:text-emerald-400">
+                {completedCount} / {decor.length}
+              </strong>
             </span>
           </div>
         </div>
       </header>
 
-      <ul className="mx-auto max-w-3xl px-6 py-8 space-y-3">
+      <ul className="mx-auto max-w-6xl px-6 py-8 space-y-2.5">
         {decor.map((d) => {
           const complete = isComplete(d.normal.progress);
           return (
             <li
               key={d.name}
-              className={`rounded-2xl bg-white dark:bg-zinc-800/70 px-5 py-4 shadow-sm ring-1 transition ${
+              className={`rounded-xl bg-white dark:bg-zinc-900 px-5 py-4 ring-1 ${
                 complete
-                  ? "ring-emerald-300/70 dark:ring-emerald-700/50"
-                  : "ring-zinc-200/60 dark:ring-zinc-700"
+                  ? "ring-emerald-200 dark:ring-emerald-800/60"
+                  : "ring-zinc-200 dark:ring-zinc-800"
               }`}
             >
-              <div className="flex items-baseline justify-between gap-3">
+              <div className="mb-3 flex items-baseline justify-between gap-3">
                 <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
                   {d.name}
                 </h2>
@@ -123,17 +147,21 @@ export default function Home() {
                   </span>
                 )}
               </div>
-              <div className="mt-3 space-y-2">
-                <ProgressBadge variant={d.normal} label="一般" />
-                {d.rare && <ProgressBadge variant={d.rare} label="稀有" />}
+              <div className="grid grid-cols-1 gap-x-8 gap-y-3 md:grid-cols-2 md:divide-x md:divide-zinc-100 dark:md:divide-zinc-800">
+                <div className="md:pr-8">
+                  <VariantPanel variant={d.normal} label="一般" />
+                </div>
+                <div className="md:pl-8">
+                  <VariantPanel variant={d.rare} label="稀有" />
+                </div>
               </div>
             </li>
           );
         })}
       </ul>
 
-      <footer className="mx-auto max-w-3xl px-6 pb-10 text-center text-xs text-zinc-500 dark:text-zinc-500">
-        資料來源：Andy 的 Pikmin Bloom 收藏進度表。Pikmin Bloom™ © Nintendo / Niantic.
+      <footer className="mx-auto max-w-6xl px-6 pb-10 text-center text-xs text-zinc-400 dark:text-zinc-600">
+        Pikmin Bloom™ © Nintendo / Niantic
       </footer>
     </main>
   );
